@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: white;
+}
+
+.btn {
+  @apply font-bold py-2 px-4 rounded;
+}
+
+.btn-blue {
+  @apply bg-blue-500 text-white;
+}
+
+.btn-blue:hover {
+  @apply bg-blue-700;
+}
+
+.card {
+  @apply bg-white shadow-md rounded-lg p-6;
+}
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 215 100% 50%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 235 60% 60%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 240 40% 70%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 90%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 100% 50%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222 30% 10%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222 25% 14%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 217 90% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 263 70% 60%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217 25% 26%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border bg-card p-6 shadow-sm transition-all duration-200 hover:shadow-md;
+  }
+  
+  .page-title {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-4xl font-bold text-transparent tracking-tight;
+  }
+  
+  .section-title {
+    @apply text-xl font-semibold text-foreground tracking-tight mb-4;
+  }
+  
+  .body-text {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+  
+  .header-title {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-3xl font-bold text-transparent;
+  }
+  
+  .select-container {
+    @apply relative w-full;
+  }
+  
+  .custom-select {
+    @apply w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring;
+  }
+  
+  .merge-btn {
+    @apply mt-4 rounded-md bg-primary px-6 py-2 text-white transition-colors hover:bg-primary/90 hover:shadow-md;
+  }
+  
+  .merge-result-container {
+    @apply mt-8 rounded-lg border border-border p-6;
+  }
+  
+  .merge-result-title {
+    @apply mb-4 text-xl font-semibold;
+  }
+  
+  .interactive-element {
+    @apply transition-all duration-150 ease-in-out hover:translate-y-[-2px];
+  }
+} 

@@ -1,0 +1,57 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Git 操作规则
+
+## Git 操作处理流程
+
+### 分支管理
+- 使用isomorphic-git进行所有Git操作
+- 分支操作必须通过BranchManager组件进行
+- 分支状态变更需要实时更新UI
+
+### Merge操作
+1. 预检查阶段
+   - 检查分支是否存在
+   - 检查是否有未提交的更改
+   - 预测可能的冲突
+
+2. 执行阶段
+   - 使用isomorphic-git执行merge
+   - 捕获并处理所有错误
+   - 保存merge状态
+
+3. 冲突处理
+   - 使用Monaco Editor显示冲突
+   - 提供三向对比视图
+   - 自动保存解决进度
+
+### 提交规范
+- commit message格式：
+  ```
+  <type>(<scope>): <subject>
+  
+  <body>
+  
+  <footer>
+  ```
+- type类型：
+  - feat: 新功能
+  - fix: 修复
+  - docs: 文档
+  - style: 格式
+  - refactor: 重构
+  - test: 测试
+  - chore: 构建过程或辅助工具的变动
+
+## 错误处理
+- 所有Git操作都需要try-catch包装
+- 错误信息需要用户友好的展示
+- 提供错误恢复建议
+
+## 安全考虑
+- 不存储用户Git凭证
+- 使用GitHub OAuth进行认证
+- 所有操作在客户端执行

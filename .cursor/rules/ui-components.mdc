@@ -1,0 +1,83 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# UI组件开发规则
+
+## 组件设计原则
+
+### 通用原则
+- 组件必须是TypeScript
+- 使用函数式组件
+- 遵循React Hooks最佳实践
+- 保持组件职责单一
+
+### 样式规范
+- 优先使用TailwindCSS
+- 自定义样式使用CSS Modules
+- 遵循移动优先的响应式设计
+- 使用shadcn/ui作为基础组件库
+
+### 组件文档
+每个组件必须包含以下文档：
+```tsx
+/**
+ * @component ComponentName
+ * @description 组件的简要描述
+ * 
+ * @example
+ * ```tsx
+ * <ComponentName prop1="value" prop2={value} />
+ * ```
+ * 
+ * @props {Type} propName - 属性描述
+ */
+```
+
+### 状态管理
+- 使用React Context进行全局状态管理
+- 复杂状态考虑使用Zustand
+- 避免prop drilling
+
+### 性能优化
+- 合理使用React.memo
+- 使用useMemo和useCallback优化性能
+- 实现虚拟滚动（大列表）
+- 使用Next.js的图片优化
+
+## 组件类型
+
+### 布局组件
+- Header
+- Footer
+- Sidebar
+- MainContent
+- Modal
+
+### Git相关组件
+- BranchSelector
+- CommitList
+- DiffViewer
+- ConflictResolver
+- MergeStatus
+
+### 通用UI组件
+- Button
+- Input
+- Select
+- Alert
+- Loading
+- ErrorBoundary
+
+## 可访问性要求
+- 所有组件必须通过WCAG 2.1 AA级标准
+- 提供键盘导航支持
+- 适当的ARIA标签
+- 支持高对比度模式
+
+## 测试要求
+- 单元测试覆盖率 > 80%
+- 快照测试
+- 集成测试
+- E2E测试关键流程
