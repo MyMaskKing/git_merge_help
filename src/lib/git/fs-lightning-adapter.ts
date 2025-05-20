@@ -1,33 +1,66 @@
 import { Buffer } from 'buffer';
 import { FSAdapter } from './fs-adapter';
 import FS from '@isomorphic-git/lightning-fs';
+import { createMemoryFS } from './fs-adapter';
 
 /**
  * 适配器类，将LightningFS适配为符合FSAdapter接口的对象
  */
 export class LightningFSAdapter implements FSAdapter {
   private fs: FS;
+  private initialized: boolean = false;
 
   constructor(name: string) {
-    this.fs = new FS(name);
+    try {
+      console.log('初始化LightningFS...');
+      if (typeof window === 'undefined') {
+        throw new Error('LightningFS只能在浏览器环境中使用');
+      }
+      if (!name) {
+        throw new Error('必须提供文件系统名称');
+      }
+      this.fs = new FS(name);
+      this.initialized = true;
+      console.log('LightningFS初始化成功');
+    } catch (error) {
+      console.error('LightningFS初始化失败:', error);
+      throw error;
+    }
+  }
+
+  private ensureInitialized() {
+    if (!this.initialized) {
+      throw new Error('LightningFS未正确初始化');
+    }
   }
 
   get promises() {
+    this.ensureInitialized();
     return {
       readFile: async (path: string): Promise<Buffer> => {
-        const result = await this.fs.promises.readFile(path, { encoding: 'buffer' }) as Buffer | Uint8Array | string;
-        if (Buffer.isBuffer(result)) {
-          return result;
-        } else if (typeof result === 'string') {
-          return Buffer.from(result);
-        } else {
-          // Uint8Array
-          return Buffer.from(result);
+        try {
+          const result = await this.fs.promises.readFile(path, { encoding: 'buffer' }) as Buffer | Uint8Array | string;
+          if (Buffer.isBuffer(result)) {
+            return result;
+          } else if (typeof result === 'string') {
+            return Buffer.from(result);
+          } else {
+            // Uint8Array
+            return Buffer.from(result);
+          }
+        } catch (error) {
+          console.error(`读取文件失败 (${path}):`, error);
+          throw error;
         }
       },
 
       writeFile: async (path: string, data: Buffer): Promise<void> => {
-        await this.fs.promises.writeFile(path, data);
+        try {
+          await this.fs.promises.writeFile(path, data);
+        } catch (error) {
+          console.error(`写入文件失败 (${path}):`, error);
+          throw error;
+        }
       },
 
       unlink: async (path: string): Promise<void> => {
@@ -100,11 +133,24 @@ export class LightningFSAdapter implements FSAdapter {
    * 获取原始的LightningFS实例
    */
   getNativeFS(): FS {
+    this.ensureInitialized();
     return this.fs;
   }
 }
 
 // 创建一个LightningFS适配器实例
 export const createLightningFSAdapter = (name: string): FSAdapter => {
-  return new LightningFSAdapter(name);
+  try {
+    console.log('创建文件系统适配器...');
+    // 在服务器端使用内存文件系统
+    if (typeof window === 'undefined') {
+      console.log('服务器端环境，使用内存文件系统');
+      return createMemoryFS();
+    }
+    console.log('客户端环境，使用LightningFS');
+    return new LightningFSAdapter(name);
+  } catch (error) {
+    console.error('创建文件系统适配器失败:', error);
+    throw error;
+  }
 }; 

@@ -2,9 +2,25 @@ import * as git from 'isomorphic-git'
 import http from 'isomorphic-git/http/web'
 import { Buffer } from 'buffer'
 import { createLightningFSAdapter } from './fs-lightning-adapter'
+import { FSAdapter } from './fs-adapter'
 
 // 创建文件系统适配器
-const fs = createLightningFSAdapter('git-merge-manager')
+let fs: FSAdapter;
+
+// 延迟初始化文件系统，只在客户端执行
+const getFS = () => {
+  if (!fs) {
+    try {
+      console.log('初始化文件系统...');
+      fs = createLightningFSAdapter('git-merge-manager');
+      console.log('文件系统初始化成功');
+    } catch (error) {
+      console.error('文件系统初始化失败:', error);
+      throw error;
+    }
+  }
+  return fs;
+}
 
 export interface GitConfig {
   token: string
@@ -28,18 +44,46 @@ export class GitClient {
   private config: GitConfig
   private corsProxy: string = 'https://cors.isomorphic-git.org'
   private dir: string = '/workspace'
+  private initialized: boolean = false
 
   constructor(config: GitConfig) {
-    this.config = config
+    try {
+      console.log('初始化Git客户端...');
+      // 确保在服务器端渲染时不会初始化
+      if (typeof window === 'undefined') {
+        throw new Error('GitClient只能在浏览器环境中使用');
+      }
+      this.config = config;
+      // 验证配置
+      if (!this.config.token) {
+        throw new Error('必须提供token');
+      }
+      if (!this.config.repoUrl && !(this.config.owner && this.config.repo)) {
+        throw new Error('必须提供repoUrl或owner和repo');
+      }
+      console.log('Git客户端配置验证成功');
+      this.initialized = true;
+    } catch (error) {
+      console.error('Git客户端初始化失败:', error);
+      throw error;
+    }
+  }
+
+  private ensureInitialized() {
+    if (!this.initialized) {
+      throw new Error('Git客户端未正确初始化');
+    }
   }
 
   private getAuth() {
+    this.ensureInitialized();
     return {
       username: this.config.token,
     }
   }
 
   private getUrl(): string {
+    this.ensureInitialized();
     if (this.config.repoUrl) {
       return this.config.repoUrl
     }
@@ -53,8 +97,12 @@ export class GitClient {
 
   async clone(): Promise<void> {
     try {
+      this.ensureInitialized();
+      console.log('开始克隆仓库...');
+      console.log('仓库URL:', this.getUrl());
+      
       await git.clone({
-        fs,
+        fs: getFS(),
         http,
         dir: this.dir,
         url: this.getUrl(),
@@ -62,17 +110,24 @@ export class GitClient {
         singleBranch: false,
         depth: 1,
         onAuth: () => this.getAuth(),
+        onProgress: (event) => {
+          console.log('克隆进度:', event);
+        },
+        onMessage: (message) => {
+          console.log('克隆消息:', message);
+        },
       })
+      console.log('仓库克隆成功');
     } catch (error) {
-      console.error('克隆仓库失败:', error)
-      throw new Error('克隆仓库失败')
+      console.error('克隆仓库失败:', error);
+      throw new Error(`克隆仓库失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 
   async checkout(branch: string): Promise<void> {
     try {
       await git.checkout({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         ref: branch,
       })
@@ -85,7 +140,7 @@ export class GitClient {
   async merge(sourceBranch: string): Promise<MergeResult> {
     try {
       await git.merge({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         theirs: sourceBranch,
         author: {
@@ -96,7 +151,7 @@ export class GitClient {
 
       // 检查是否有冲突
       const status = await git.statusMatrix({ 
-        fs, 
+        fs: getFS(), 
         dir: this.dir 
       })
       
@@ -121,7 +176,7 @@ export class GitClient {
     try {
       // 保存当前分支
       const currentBranch = await git.currentBranch({
-        fs,
+        fs: getFS(),
         dir: this.dir,
       })
 
@@ -130,7 +185,7 @@ export class GitClient {
 
       // 读取文件内容
       const content = await git.readFile({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         filepath: path,
       })
@@ -153,7 +208,7 @@ export class GitClient {
   async getWorkingContent(path: string): Promise<FileContent> {
     try {
       const content = await git.readFile({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         filepath: path,
       })
@@ -171,7 +226,7 @@ export class GitClient {
   async getConflictFiles(): Promise<string[]> {
     try {
       const status = await git.statusMatrix({
-        fs,
+        fs: getFS(),
         dir: this.dir,
       })
 
@@ -190,14 +245,14 @@ export class GitClient {
   ): Promise<void> {
     try {
       // 写入解决后的内容
-      await fs.promises.writeFile(
+      await getFS().promises.writeFile(
         `${this.dir}/${file}`, 
         Buffer.from(content)
       );
       
       // 标记为已解决
       await git.add({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         filepath: file,
       })
@@ -210,7 +265,7 @@ export class GitClient {
   async commit(message: string): Promise<string> {
     try {
       const sha = await git.commit({
-        fs,
+        fs: getFS(),
         dir: this.dir,
         message,
         author: {
@@ -228,7 +283,7 @@ export class GitClient {
   async push(): Promise<void> {
     try {
       await git.push({
-        fs,
+        fs: getFS(),
         http,
         dir: this.dir,
         url: this.getUrl(),
@@ -248,7 +303,7 @@ export class GitClient {
       
       // 执行pull操作
       await git.pull({
-        fs,
+        fs: getFS(),
         http,
         dir: this.dir,
         url: this.getUrl(),
